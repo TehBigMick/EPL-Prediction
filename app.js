@@ -1,6 +1,6 @@
 // Initialize Supabase
 const supabaseUrl = "https://reqoykoevyggemmspszc.supabase.co";
-const supabaseKey = "YOUR_ANON_KEY"; // <-- Replace with your anon key
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW95a29ldnlnZ2VtbXNwc3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzAyNTksImV4cCI6MjA5NDUwNjI1OX0.70dkxT--W5zbc4vWYcusrhzpivmSLbuP3GQNqxKNlLw"; // <-- Replace with your anon key
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Current user UUID (Alice)
