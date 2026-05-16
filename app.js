@@ -1,7 +1,9 @@
-// Initialize Supabase (single declaration)
+// Initialize Supabase — DO NOT use "const supabase" again
 const supabaseUrl = "https://reqoykoevyggemmspszc.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW95a29ldnlnZ2VtbXNwc3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzAyNTksImV4cCI6MjA5NDUwNjI1OX0.70dkxT--W5zbc4vWYcusrhzpivmSLbuP3GQNqxKNlLw"; // <-- Replace with your Supabase anon key
-window.supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW95a29ldnlnZ2VtbXNwc3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzAyNTksImV4cCI6MjA5NDUwNjI1OX0.70dkxT--W5zbc4vWYcusrhzpivmSLbuP3GQNqxKNlLw";
+
+// Assign global supabase client
+supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let CURRENT_USER_ID = null;
 
@@ -11,16 +13,11 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   const password = prompt("Enter your password:");
   if (!email || !password) return;
 
-  // Sign in
   const { data: signInData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-  if (loginError) {
-    alert("Login failed: " + loginError.message);
-    return;
-  }
+  if (loginError) return alert("Login failed: " + loginError.message);
 
   CURRENT_USER_ID = signInData.user.id;
 
-  // Get user row
   const { data: user } = await supabase.from("users").select("*").eq("id", CURRENT_USER_ID).single();
   document.getElementById("user-name").textContent = `Logged in as ${user.data.display_name}`;
 
@@ -29,7 +26,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   subscribeRealtime();
 });
 
-// Load upcoming matches
+// Load matches
 async function loadMatches() {
   if (!CURRENT_USER_ID) return;
 
@@ -38,7 +35,6 @@ async function loadMatches() {
   tbody.innerHTML = "";
 
   for (let match of matches) {
-    // Get user's prediction
     const { data: pred } = await supabase.from("predictions")
       .select("*")
       .eq("user_id", CURRENT_USER_ID)
@@ -70,6 +66,7 @@ async function loadMatches() {
 // Submit prediction
 async function submitPrediction(matchId, isLocked) {
   if (isLocked) return alert("Predictions are locked.");
+
   const homeScore = parseInt(document.getElementById(`home-${matchId}`).value);
   const awayScore = parseInt(document.getElementById(`away-${matchId}`).value);
   if (isNaN(homeScore) || isNaN(awayScore)) return alert("Enter both scores.");
@@ -103,7 +100,7 @@ async function loadLeaderboard() {
   });
 }
 
-// Realtime updates
+// Subscribe to live updates
 function subscribeRealtime() {
   supabase.from('users').on('UPDATE', payload => loadLeaderboard()).subscribe();
   supabase.from('matches').on('UPDATE', payload => loadMatches()).subscribe();
