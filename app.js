@@ -19,16 +19,24 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
   CURRENT_USER_ID = signInData.user.id;
 
-  // Fetch the corresponding row in `users` safely
-  const { data: user, error: userError } = await supabase
+  // Check if user exists in users table
+  let { data: user, error: userError } = await supabase
     .from("users")
     .select("*")
     .eq("id", CURRENT_USER_ID)
     .single();
 
+  // If not, create a new row automatically
   if (userError || !user) {
-    alert("No matching row found in users table. Please add this Auth user to the table.");
-    return;
+    const displayName = email.split("@")[0]; // default name from email
+    const { data: newUser, error: insertError } = await supabase.from("users").insert([{
+      id: CURRENT_USER_ID,
+      display_name: displayName,
+      total_points: 0
+    }]).select().single();
+
+    if (insertError) return alert("Failed to create user row: " + insertError.message);
+    user = newUser;
   }
 
   document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
