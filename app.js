@@ -19,7 +19,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
   CURRENT_USER_ID = signInData.user.id;
 
-  // Try to fetch the corresponding row in `users` safely
+  // Fetch the corresponding row in `users` safely
   const { data: user, error: userError } = await supabase
     .from("users")
     .select("*")
@@ -129,8 +129,23 @@ async function loadLeaderboard() {
   });
 }
 
-// Realtime updates
+// Realtime updates using Supabase v2 channels
 function subscribeRealtime() {
-  supabase.from('users').on('UPDATE', payload => loadLeaderboard()).subscribe();
-  supabase.from('matches').on('UPDATE', payload => loadMatches()).subscribe();
+  const usersChannel = supabase
+    .channel('public:users')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, () => {
+      loadLeaderboard();
+    })
+    .subscribe();
+
+  const matchesChannel = supabase
+    .channel('public:matches')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, () => {
+      loadMatches();
+    })
+    .subscribe();
+
+  // Keep references if we ever need to unsubscribe
+  window._supabaseUsersChannel = usersChannel;
+  window._supabaseMatchesChannel = matchesChannel;
 }
