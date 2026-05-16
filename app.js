@@ -2,7 +2,7 @@
 const supabaseUrl = "https://reqoykoevyggemmspszc.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW95a29ldnlnZ2VtbXNwc3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzAyNTksImV4cCI6MjA5NDUwNjI1OX0.70dkxT--W5zbc4vWYcusrhzpivmSLbuP3GQNqxKNlLw";
 
-// Assign to global supabase
+// Use global Supabase client
 supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let CURRENT_USER_ID = null;
@@ -19,9 +19,19 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
   CURRENT_USER_ID = signInData.user.id;
 
-  // Get user row
-  const { data: user } = await supabase.from("users").select("*").eq("id", CURRENT_USER_ID).single();
-  document.getElementById("user-name").textContent = `Logged in as ${user.data.display_name}`;
+  // Try to fetch the corresponding row in `users` safely
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", CURRENT_USER_ID)
+    .single();
+
+  if (userError || !user) {
+    alert("No matching row found in users table. Please add this Auth user to the table.");
+    return;
+  }
+
+  document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
 
   // Load UI
   loadMatches();
@@ -33,15 +43,16 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 async function loadMatches() {
   if (!CURRENT_USER_ID) return;
 
-  // Fetch all matches
-  const { data: matches, error: matchesError } = await supabase.from("matches")
+  const { data: matches, error: matchesError } = await supabase
+    .from("matches")
     .select("*")
     .order("match_date", { ascending: true });
-  if (matchesError) return console.error(matchesError);
 
-  // Fetch all predictions for current user in one query
+  if (matchesError || !matches) return console.error("Failed to load matches", matchesError);
+
   const matchIds = matches.map(m => m.id);
-  const { data: predictions } = await supabase.from("predictions")
+  const { data: predictions } = await supabase
+    .from("predictions")
     .select("*")
     .eq("user_id", CURRENT_USER_ID)
     .in("match_id", matchIds);
@@ -91,12 +102,9 @@ async function submitPrediction(matchId, isLocked) {
     .single();
 
   if (existing) {
-    await supabase.from("predictions")
-      .update({ predicted_home: homeScore, predicted_away: awayScore })
-      .eq("id", existing.id);
+    await supabase.from("predictions").update({ predicted_home: homeScore, predicted_away: awayScore }).eq("id", existing.id);
   } else {
-    await supabase.from("predictions")
-      .insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
+    await supabase.from("predictions").insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
   }
 
   loadMatches();
@@ -112,6 +120,8 @@ async function loadLeaderboard() {
   const tbody = document.querySelector("#leaderboard-table tbody");
   tbody.innerHTML = "";
 
+  if (!leaderboard) return;
+
   leaderboard.forEach((user, i) => {
     const row = document.createElement("tr");
     row.innerHTML = `<td>${i + 1}</td><td>${user.display_name}</td><td>${user.total_points}</td>`;
@@ -119,7 +129,7 @@ async function loadLeaderboard() {
   });
 }
 
-// Subscribe to realtime updates
+// Realtime updates
 function subscribeRealtime() {
   supabase.from('users').on('UPDATE', payload => loadLeaderboard()).subscribe();
   supabase.from('matches').on('UPDATE', payload => loadMatches()).subscribe();
