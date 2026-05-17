@@ -28,7 +28,7 @@
     table {
       border-collapse: collapse;
       width: 100%;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       background: #fff;
     }
 
@@ -51,15 +51,18 @@
       text-align: center;
     }
 
-    .submit-btn {
-      padding: 5px 10px;
+    #submit-all-btn {
+      display: block;
+      margin: 0 auto 30px;
+      padding: 10px 20px;
       background-color: #2ECC40;
       color: #fff;
       border: none;
       cursor: pointer;
+      font-size: 16px;
     }
 
-    .submit-btn:disabled {
+    #submit-all-btn:disabled {
       background-color: #ccc;
       cursor: not-allowed;
     }
@@ -96,6 +99,7 @@
 
   <!-- Tables Container -->
   <div id="tables-container" style="display:none;">
+
     <!-- Matches Table -->
     <div id="matches-section">
       <h2>Upcoming Matches</h2>
@@ -107,13 +111,13 @@
             <th>Date / Time</th>
             <th>Your Prediction</th>
             <th>Actual Score</th>
-            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <!-- Filled dynamically by app.js -->
         </tbody>
       </table>
+      <button id="submit-all-btn">Submit All Predictions</button>
     </div>
 
     <!-- Leaderboard Table -->
@@ -132,20 +136,10 @@
         </tbody>
       </table>
     </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
-
-  <script>
-    // Show tables container after login
-    const loginBtn = document.getElementById("login-btn");
-    loginBtn.addEventListener("click", () => {
-      const tables = document.getElementById("tables-container");
-      setTimeout(() => {
-        tables.style.display = "flex";
-      }, 500); // wait a moment for login to complete
-    });
-  </script>
 </body>
 </html>
