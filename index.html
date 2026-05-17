@@ -4,7 +4,86 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EPL Prediction Game</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+
+    #login-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #user-name {
+      margin-left: 10px;
+      font-weight: bold;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 30px;
+      background: #fff;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #0074D9;
+      color: #fff;
+    }
+
+    input[type=number] {
+      width: 50px;
+      text-align: center;
+    }
+
+    .submit-btn {
+      padding: 5px 10px;
+      background-color: #2ECC40;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    .submit-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #tables-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: space-between;
+    }
+
+    #matches-section, #leaderboard-section {
+      flex: 1 1 48%;
+    }
+
+    @media(max-width: 768px) {
+      #tables-container {
+        flex-direction: column;
+      }
+      #matches-section, #leaderboard-section {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <h1>EPL Prediction Game</h1>
@@ -15,44 +94,58 @@
     <span id="user-name"></span>
   </div>
 
-  <!-- Matches Table -->
-  <div id="matches-section" style="display:none;">
-    <h2>Upcoming Matches</h2>
-    <table id="matches-table">
-      <thead>
-        <tr>
-          <th>Home Team</th>
-          <th>Away Team</th>
-          <th>Date / Time</th>
-          <th>Your Prediction</th>
-          <th>Actual Score</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows dynamically added by app.js -->
-      </tbody>
-    </table>
-  </div>
+  <!-- Tables Container -->
+  <div id="tables-container" style="display:none;">
+    <!-- Matches Table -->
+    <div id="matches-section">
+      <h2>Upcoming Matches</h2>
+      <table id="matches-table">
+        <thead>
+          <tr>
+            <th>Home Team</th>
+            <th>Away Team</th>
+            <th>Date / Time</th>
+            <th>Your Prediction</th>
+            <th>Actual Score</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filled dynamically by app.js -->
+        </tbody>
+      </table>
+    </div>
 
-  <!-- Leaderboard Table -->
-  <div id="leaderboard-section" style="display:none;">
-    <h2>Leaderboard</h2>
-    <table id="leaderboard-table">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>User</th>
-          <th>Points</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows dynamically added by app.js -->
-      </tbody>
-    </table>
+    <!-- Leaderboard Table -->
+    <div id="leaderboard-section">
+      <h2>Leaderboard</h2>
+      <table id="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>User</th>
+            <th>Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Filled dynamically by app.js -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
+
+  <script>
+    // Show tables container after login
+    const loginBtn = document.getElementById("login-btn");
+    loginBtn.addEventListener("click", () => {
+      const tables = document.getElementById("tables-container");
+      setTimeout(() => {
+        tables.style.display = "flex";
+      }, 500); // wait a moment for login to complete
+    });
+  </script>
 </body>
 </html>
