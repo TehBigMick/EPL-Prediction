@@ -1,8 +1,7 @@
-// Initialize Supabase (plain JS)
+// Initialize Supabase
 const supabaseUrl = "https://reqoykoevyggemmspszc.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW95a29ldnlnZ2VtbXNwc3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzAyNTksImV4cCI6MjA5NDUwNjI1OX0.70dkxT--W5zbc4vWYcusrhzpivmSLbuP3GQNqxKNlLw";
 
-// Supabase client
 supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let CURRENT_USER_ID = null;
@@ -18,7 +17,6 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
   CURRENT_USER_ID = signInData.user.id;
 
-  // Fetch user row
   const { data: user, error: userError } = await supabase
     .from("users")
     .select("*")
@@ -31,10 +29,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   }
 
   document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
-
-  // Show sections after login
-  document.getElementById("matches-section").style.display = "block";
-  document.getElementById("leaderboard-section").style.display = "block";
+  document.getElementById("tables-container").style.display = "flex";
 
   loadMatches();
   loadLeaderboard();
@@ -50,14 +45,15 @@ async function loadMatches() {
     .select("*")
     .order("match_date", { ascending: true });
 
-  if (matchesError || !matches) return console.error("Failed to load matches", matchesError);
+  if (matchesError || !matches) {
+    console.error("Failed to load matches", matchesError);
+    return;
+  }
 
-  const matchIds = matches.map(m => m.id);
   const { data: predictions } = await supabase
     .from("predictions")
     .select("*")
-    .eq("user_id", CURRENT_USER_ID)
-    .in("match_id", matchIds);
+    .eq("user_id", CURRENT_USER_ID);
 
   const predictionsMap = {};
   if (predictions) predictions.forEach(p => { predictionsMap[p.match_id] = p; });
@@ -71,6 +67,7 @@ async function loadMatches() {
     const awayVal = pred ? pred.predicted_away : "";
 
     const row = document.createElement("tr");
+    row.dataset.matchId = match.id;
     row.innerHTML = `
       <td>${match.home_team}</td>
       <td>${match.away_team}</td>
@@ -81,32 +78,34 @@ async function loadMatches() {
         <input type="number" id="away-${match.id}" value="${awayVal}" ${match.is_locked ? "disabled" : ""}>
       </td>
       <td>${match.home_score ?? "-"} - ${match.away_score ?? "-"}</td>
-      <td>
-        <button class="submit-btn" onclick="submitPrediction('${match.id}', ${match.is_locked})" ${match.is_locked ? "disabled" : ""}>Submit</button>
-      </td>
     `;
     tbody.appendChild(row);
   });
 }
 
-// Submit / update prediction
-async function submitPrediction(matchId, isLocked) {
-  if (isLocked) return alert("Predictions are locked.");
+// Submit all predictions
+async function submitAllPredictions() {
+  const rows = document.querySelectorAll("#matches-table tbody tr");
 
-  const homeScore = parseInt(document.getElementById(`home-${matchId}`).value);
-  const awayScore = parseInt(document.getElementById(`away-${matchId}`).value);
-  if (isNaN(homeScore) || isNaN(awayScore)) return alert("Enter both scores.");
+  for (let row of rows) {
+    const matchId = row.dataset.matchId;
+    const homeScore = parseInt(row.querySelector(`input[id^="home-"]`).value);
+    const awayScore = parseInt(row.querySelector(`input[id^="away-"]`).value);
 
-  const { data: existing } = await supabase.from("predictions")
-    .select("*")
-    .eq("user_id", CURRENT_USER_ID)
-    .eq("match_id", matchId)
-    .single();
+    if (isNaN(homeScore) || isNaN(awayScore)) continue;
 
-  if (existing) {
-    await supabase.from("predictions").update({ predicted_home: homeScore, predicted_away: awayScore }).eq("id", existing.id);
-  } else {
-    await supabase.from("predictions").insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
+    const { data: existing } = await supabase
+      .from("predictions")
+      .select("*")
+      .eq("user_id", CURRENT_USER_ID)
+      .eq("match_id", matchId)
+      .single();
+
+    if (existing) {
+      await supabase.from("predictions").update({ predicted_home: homeScore, predicted_away: awayScore }).eq("id", existing.id);
+    } else {
+      await supabase.from("predictions").insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
+    }
   }
 
   loadMatches();
@@ -115,7 +114,8 @@ async function submitPrediction(matchId, isLocked) {
 
 // Leaderboard
 async function loadLeaderboard() {
-  const { data: leaderboard } = await supabase.from("users")
+  const { data: leaderboard } = await supabase
+    .from("users")
     .select("*")
     .order("total_points", { ascending: false });
 
@@ -146,3 +146,6 @@ function subscribeRealtime() {
   window._supabaseUsersChannel = usersChannel;
   window._supabaseMatchesChannel = matchesChannel;
 }
+
+// Bind the single submit button
+document.getElementById("submit-all-btn").addEventListener("click", submitAllPredictions);
