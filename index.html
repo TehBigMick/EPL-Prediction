@@ -1,63 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EPL Prediction Game</title>
-<style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to right, #e0f7fa, #f1f8e9); margin: 0; padding: 20px; color: #333; }
-  h1 { text-align: center; color: #01579b; font-size: 2.2rem; margin-bottom: 10px; }
-  h2 { color: #0277bd; margin-top: 40px; margin-bottom: 10px; }
-  #login-section { text-align: center; margin-bottom: 30px; }
-  #login-btn { background-color: #0288d1; color: white; border: none; padding: 10px 25px; font-size: 1rem; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; }
-  #login-btn:hover { background-color: #0277bd; }
-  #user-name { margin-left: 15px; font-weight: bold; font-size: 1.1rem; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; background-color: white; }
-  th, td { padding: 12px 15px; text-align: center; }
-  th { background-color: #0288d1; color: white; font-size: 1rem; }
-  tr:nth-child(even) { background-color: #f1f1f1; }
-  input[type=number] { width: 50px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
-  button.submit-btn { padding: 5px 12px; background-color: #26a69a; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s ease; }
-  button.submit-btn:hover { background-color: #2bbbad; }
-  @media(max-width: 768px) { th, td { font-size: 0.9rem; padding: 8px 10px; } #login-btn { padding: 8px 20px; font-size: 0.9rem; } }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EPL Prediction Game</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h1>EPL Prediction Game</h1>
+  <h1>EPL Prediction Game</h1>
 
-<div id="login-section">
-  <button id="login-btn">Login / Sign Up</button>
-  <span id="user-name"></span>
-</div>
+  <!-- Login Section -->
+  <div id="login-section">
+    <button id="login-btn">Login</button>
+    <span id="user-name"></span>
+  </div>
 
-<h2>Upcoming Matches</h2>
-<table id="matches-table">
-  <thead>
-    <tr>
-      <th>Home</th>
-      <th>Away</th>
-      <th>Kickoff</th>
-      <th>Prediction</th>
-      <th>Live Score</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <!-- Matches Table -->
+  <div id="matches-section" style="display:none;">
+    <h2>Upcoming Matches</h2>
+    <table id="matches-table">
+      <thead>
+        <tr>
+          <th>Home Team</th>
+          <th>Away Team</th>
+          <th>Date / Time</th>
+          <th>Your Prediction</th>
+          <th>Actual Score</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows dynamically added by app.js -->
+      </tbody>
+    </table>
+  </div>
 
-<h2>Leaderboard</h2>
-<table id="leaderboard-table">
-  <thead>
-    <tr>
-      <th>Rank</th>
-      <th>Player</th>
-      <th>Points</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <!-- Leaderboard Table -->
+  <div id="leaderboard-section" style="display:none;">
+    <h2>Leaderboard</h2>
+    <table id="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows dynamically added by app.js -->
+      </tbody>
+    </table>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
 </body>
 </html>
