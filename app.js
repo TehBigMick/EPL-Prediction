@@ -80,6 +80,14 @@ async function loadMatches() {
       <td>${match.home_score ?? "-"} - ${match.away_score ?? "-"}</td>
     `;
     tbody.appendChild(row);
+
+    // Lock predicted rows visually if already submitted
+    if (pred) {
+      row.querySelector(`#home-${match.id}`).disabled = true;
+      row.querySelector(`#away-${match.id}`).disabled = true;
+      row.querySelector(`#home-${match.id}`).classList.add("locked");
+      row.querySelector(`#away-${match.id}`).classList.add("locked");
+    }
   });
 }
 
@@ -89,8 +97,11 @@ async function submitAllPredictions() {
 
   for (let row of rows) {
     const matchId = row.dataset.matchId;
-    const homeScore = parseInt(row.querySelector(`input[id^="home-"]`).value);
-    const awayScore = parseInt(row.querySelector(`input[id^="away-"]`).value);
+    const homeInput = row.querySelector(`input[id^="home-"]`);
+    const awayInput = row.querySelector(`input[id^="away-"]`);
+
+    const homeScore = parseInt(homeInput.value);
+    const awayScore = parseInt(awayInput.value);
 
     if (isNaN(homeScore) || isNaN(awayScore)) continue;
 
@@ -102,13 +113,21 @@ async function submitAllPredictions() {
       .single();
 
     if (existing) {
-      await supabase.from("predictions").update({ predicted_home: homeScore, predicted_away: awayScore }).eq("id", existing.id);
+      await supabase.from("predictions")
+        .update({ predicted_home: homeScore, predicted_away: awayScore })
+        .eq("id", existing.id);
     } else {
-      await supabase.from("predictions").insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
+      await supabase.from("predictions")
+        .insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
     }
+
+    // Lock the inputs after submission
+    homeInput.disabled = true;
+    awayInput.disabled = true;
+    homeInput.classList.add("locked");
+    awayInput.classList.add("locked");
   }
 
-  loadMatches();
   loadLeaderboard();
 }
 
