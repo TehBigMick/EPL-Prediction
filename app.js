@@ -6,7 +6,7 @@ supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let CURRENT_USER_ID = null;
 
-// Check for existing session on page load
+// Restore session if exists
 window.addEventListener("DOMContentLoaded", async () => {
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -20,6 +20,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     if (user) {
       document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
+      document.getElementById("login-section").style.display = "none"; // hide login
       document.getElementById("tables-container").style.display = "flex";
       loadMatches();
       loadLeaderboard();
@@ -28,7 +29,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// Login form handler
+// Login handler
 document.getElementById("login-btn").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -51,6 +52,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   }
 
   document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
+  document.getElementById("login-section").style.display = "none"; // hide login
   document.getElementById("tables-container").style.display = "flex";
 
   loadMatches();
@@ -67,10 +69,7 @@ async function loadMatches() {
     .select("*")
     .order("match_date", { ascending: true });
 
-  if (matchesError || !matches) {
-    console.error("Failed to load matches", matchesError);
-    return;
-  }
+  if (matchesError || !matches) return console.error("Failed to load matches", matchesError);
 
   const { data: predictions } = await supabase
     .from("predictions")
@@ -103,7 +102,7 @@ async function loadMatches() {
     `;
     tbody.appendChild(row);
 
-    // Lock already predicted rows
+    // Lock pre-existing predictions
     if (pred) {
       row.querySelector(`#home-${match.id}`).disabled = true;
       row.querySelector(`#away-${match.id}`).disabled = true;
