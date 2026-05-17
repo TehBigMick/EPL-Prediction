@@ -6,11 +6,33 @@ supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let CURRENT_USER_ID = null;
 
-// Login handler
+// Check for existing session on page load
+window.addEventListener("DOMContentLoaded", async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session) {
+    CURRENT_USER_ID = session.user.id;
+    const { data: user } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", CURRENT_USER_ID)
+      .single();
+
+    if (user) {
+      document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
+      document.getElementById("tables-container").style.display = "flex";
+      loadMatches();
+      loadLeaderboard();
+      subscribeRealtime();
+    }
+  }
+});
+
+// Login form handler
 document.getElementById("login-btn").addEventListener("click", async () => {
-  const email = prompt("Enter your email:");
-  const password = prompt("Enter your password:");
-  if (!email || !password) return;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  if (!email || !password) return alert("Enter email and password");
 
   const { data: signInData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
   if (loginError) return alert("Login failed: " + loginError.message);
@@ -81,7 +103,7 @@ async function loadMatches() {
     `;
     tbody.appendChild(row);
 
-    // Lock predicted rows visually if already submitted
+    // Lock already predicted rows
     if (pred) {
       row.querySelector(`#home-${match.id}`).disabled = true;
       row.querySelector(`#away-${match.id}`).disabled = true;
@@ -121,7 +143,7 @@ async function submitAllPredictions() {
         .insert([{ user_id: CURRENT_USER_ID, match_id: matchId, predicted_home: homeScore, predicted_away: awayScore }]);
     }
 
-    // Lock the inputs after submission
+    // Lock inputs after submission
     homeInput.disabled = true;
     awayInput.disabled = true;
     homeInput.classList.add("locked");
