@@ -2,24 +2,23 @@
 const supabaseUrl = "https://reqoykoevyggemmspszc.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlcW95a29ldnlnZ2VtbXNwc3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5MzAyNTksImV4cCI6MjA5NDUwNjI1OX0.70dkxT--W5zbc4vWYcusrhzpivmSLbuP3GQNqxKNlLw";
 
-// Use global Supabase client
+// Supabase client
 supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let CURRENT_USER_ID = null;
 
-// Login button handler
+// Login handler
 document.getElementById("login-btn").addEventListener("click", async () => {
   const email = prompt("Enter your email:");
   const password = prompt("Enter your password:");
   if (!email || !password) return;
 
-  // Sign in with Supabase Auth
   const { data: signInData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
   if (loginError) return alert("Login failed: " + loginError.message);
 
   CURRENT_USER_ID = signInData.user.id;
 
-  // Fetch the corresponding row in `users` table
+  // Fetch user row
   const { data: user, error: userError } = await supabase
     .from("users")
     .select("*")
@@ -33,13 +32,16 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
   document.getElementById("user-name").textContent = `Logged in as ${user.display_name}`;
 
-  // Load UI
+  // Show sections after login
+  document.getElementById("matches-section").style.display = "block";
+  document.getElementById("leaderboard-section").style.display = "block";
+
   loadMatches();
   loadLeaderboard();
   subscribeRealtime();
 });
 
-// Load upcoming matches with batch predictions
+// Load matches
 async function loadMatches() {
   if (!CURRENT_USER_ID) return;
 
@@ -63,7 +65,7 @@ async function loadMatches() {
   const tbody = document.querySelector("#matches-table tbody");
   tbody.innerHTML = "";
 
-  for (let match of matches) {
+  matches.forEach(match => {
     const pred = predictionsMap[match.id];
     const homeVal = pred ? pred.predicted_home : "";
     const awayVal = pred ? pred.predicted_away : "";
@@ -84,10 +86,10 @@ async function loadMatches() {
       </td>
     `;
     tbody.appendChild(row);
-  }
+  });
 }
 
-// Submit or update prediction
+// Submit / update prediction
 async function submitPrediction(matchId, isLocked) {
   if (isLocked) return alert("Predictions are locked.");
 
@@ -111,7 +113,7 @@ async function submitPrediction(matchId, isLocked) {
   loadLeaderboard();
 }
 
-// Load leaderboard
+// Leaderboard
 async function loadLeaderboard() {
   const { data: leaderboard } = await supabase.from("users")
     .select("*")
@@ -129,23 +131,18 @@ async function loadLeaderboard() {
   });
 }
 
-// Realtime updates using Supabase v2 channels
+// Realtime updates
 function subscribeRealtime() {
   const usersChannel = supabase
     .channel('public:users')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, () => {
-      loadLeaderboard();
-    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users' }, () => loadLeaderboard())
     .subscribe();
 
   const matchesChannel = supabase
     .channel('public:matches')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, () => {
-      loadMatches();
-    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches' }, () => loadMatches())
     .subscribe();
 
-  // Keep references if we ever need to unsubscribe
   window._supabaseUsersChannel = usersChannel;
   window._supabaseMatchesChannel = matchesChannel;
 }
